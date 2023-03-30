@@ -48,7 +48,6 @@ def login():
         return jsonify({'error': 'Invalid username or password'}), 401
     access_token = create_access_token(identity=username)
     response = jsonify({'access_token': access_token}), 200
-    # response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 
@@ -120,16 +119,16 @@ def update_ta(ta_id):
         ta.semester = bool(data['semester'])
     if 'class_size' in data:
         ta.class_size = int(data['class_size'])
-    # if 'performance_score' in data:
-    #     ta.performance_score = int(data['performance_score'])
+    if 'performance_score' in data:
+        ta.performance_score = int(data['performance_score'])
 
-    X = [[ta.native_english_speaker, ta.course_instructor, ta.course, ta.semester, ta.class_size]]
+    # X = [[ta.native_english_speaker, ta.course_instructor, ta.course, ta.semester, ta.class_size]]
     
    
     # performance_score = int(data['performance_score'])
-    model = joblib.load('logistic_regression_model.joblib')
-    y_pred = model.predict(X)
-    ta.performance_score = int(y_pred[0])
+    # model = joblib.load('logistic_regression_model.joblib')
+    # y_pred = model.predict(X)
+    # ta.performance_score = int(y_pred[0])
     
     
     # Commit the changes to the database
@@ -138,40 +137,17 @@ def update_ta(ta_id):
     return jsonify({'message': 'TA updated successfully'}), 200
 
 
-# @app.route('/performance_scores/<int:id>', methods=['DELETE'])
-
 @jwt_required()
 @app.route('/ta/<int:ta_id>/delete', methods=['DELETE'])
-def delete_performance_score(id):
-    ta = TA.query.filter_by(id=id).first()
+def delete_performance_score(ta_id):
+    ta = TA.query.filter_by(id=ta_id).first()
+    # print(ta)
+    # print(ta.performance_score)
     if not ta:
         return jsonify({'error': 'TA not found'}), 404
-    ta.performance_score = None
+    db.session.delete(ta)
     db.session.commit()
-    return {'message': 'Performance score deleted successfully'}, 200
-
-
-# # define route for retrieving performance score
-# @app.route('/performance-score/<int:id>', methods=['GET'])
-# @jwt_required
-# def get_performance_score(id):
-#     # Retrieve the TA from the database by ID
-#     ta = TA.query.get(id)
-#     if ta is None:
-#         return jsonify({'error': 'TA not found'}), 404
-    
-#     # Load the saved logistic regression model from file
-#     model = joblib.load('logistic_regression_model.joblib')
-    
-#     # Prepare the input data for the model
-#     X = [[ta.native_english_speaker, ta.course_instructor, ta.course, ta.semester, ta.class_size]]
-    
-#     # Make a prediction using the model
-#     y_pred = model.predict(X)
-    
-#     # Return the predicted performance score as a response
-#     return jsonify({'performance_score': int(y_pred[0])})
-
+    return {'message': 'TA record deleted successfully'}, 200
 
 
 if __name__ == '__main__':
